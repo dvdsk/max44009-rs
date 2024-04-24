@@ -130,7 +130,7 @@
 #![deny(missing_docs)]
 #![no_std]
 
-use embedded_hal::blocking::i2c;
+use embedded_hal_async::i2c::{I2c, SevenBitAddress};
 
 const DEVICE_BASE_ADDRESS: u8 = 0b100_1010;
 
@@ -169,9 +169,9 @@ pub use crate::types::{
     ConfigurationMode, CurrentDivisionRatio, Error, IntegrationTime, MeasurementMode, SlaveAddr,
 };
 
-impl<I2C, E> Max44009<I2C>
+impl<I2C> Max44009<I2C>
 where
-    I2C: i2c::Write<Error = E>,
+    I2C: I2c<SevenBitAddress>,
 {
     /// Create new instance of the Max44009 device.
     pub fn new(i2c: I2C, address: SlaveAddr) -> Self {

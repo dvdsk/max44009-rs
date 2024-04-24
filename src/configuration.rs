@@ -2,48 +2,62 @@ use crate::{
     BitFlags, ConfigurationMode, CurrentDivisionRatio, Error, IntegrationTime, Max44009,
     MeasurementMode, Register,
 };
-use embedded_hal::blocking::i2c;
+use embedded_hal_async;
+use embedded_hal_async::i2c::{I2c, SevenBitAddress};
 
-impl<I2C, E> Max44009<I2C>
+impl<I2C> Max44009<I2C>
 where
-    I2C: i2c::Write<Error = E>,
+    I2C: I2c<SevenBitAddress>,
 {
     /// Enable interrupt.
     ///
     /// The INT pin will be pulled low if the interrupt condition is triggered.
-    pub fn enable_interrupt(&mut self) -> Result<(), Error<E>> {
+    pub async fn enable_interrupt(&mut self) -> Result<(), Error<I2C::Error>> {
         self.i2c
             .write(self.address, &[Register::INT_ENABLE, 1])
+            .await
             .map_err(Error::I2C)
     }
 
     /// Disable interrupt.
-    pub fn disable_interrupt(&mut self) -> Result<(), Error<E>> {
+    pub async fn disable_interrupt(&mut self) -> Result<(), Error<I2C::Error>> {
         self.i2c
             .write(self.address, &[Register::INT_ENABLE, 0])
+            .await
             .map_err(Error::I2C)
     }
 
     /// Set the measurement mode.
-    pub fn set_measurement_mode(&mut self, mode: MeasurementMode) -> Result<(), Error<E>> {
+    pub async fn set_measurement_mode(
+        &mut self,
+        mode: MeasurementMode,
+    ) -> Result<(), Error<I2C::Error>> {
         let config = self.config;
         match mode {
             MeasurementMode::OnceEvery800ms => self.write_config(config & !BitFlags::CONTINUOUS),
             MeasurementMode::Continuous => self.write_config(config | BitFlags::CONTINUOUS),
         }
+        .await
     }
 
     /// Set configuration mode.
-    pub fn set_configuration_mode(&mut self, mode: ConfigurationMode) -> Result<(), Error<E>> {
+    pub async fn set_configuration_mode(
+        &mut self,
+        mode: ConfigurationMode,
+    ) -> Result<(), Error<I2C::Error>> {
         let config = self.config;
         match mode {
             ConfigurationMode::Automatic => self.write_config(config & !BitFlags::MANUAL),
             ConfigurationMode::Manual => self.write_config(config | BitFlags::MANUAL),
         }
+        .await
     }
 
     /// Set integration time. (Only in manual configuration mode).
-    pub fn set_integration_time(&mut self, it: IntegrationTime) -> Result<(), Error<E>> {
+    pub async fn set_integration_time(
+        &mut self,
+        it: IntegrationTime,
+    ) -> Result<(), Error<I2C::Error>> {
         self.assert_is_in_manual_mode()?;
         let config = self.config & 0b1111_1000;
         match it {
@@ -56,30 +70,33 @@ where
             IntegrationTime::_12_5ms => self.write_config(config | 0x06),
             IntegrationTime::_6_25ms => self.write_config(config | 0x07),
         }
+        .await
     }
 
     /// Set current division ratio. (Only in manual configuration mode).
-    pub fn set_current_division_ratio(
+    pub async fn set_current_division_ratio(
         &mut self,
         cdr: CurrentDivisionRatio,
-    ) -> Result<(), Error<E>> {
+    ) -> Result<(), Error<I2C::Error>> {
         self.assert_is_in_manual_mode()?;
         let config = self.config;
         match cdr {
             CurrentDivisionRatio::One => self.write_config(config & !BitFlags::CDR),
             CurrentDivisionRatio::OneEighth => self.write_config(config | BitFlags::CDR),
         }
+        .await
     }
 
-    fn write_config(&mut self, config: u8) -> Result<(), Error<E>> {
+    async fn write_config(&mut self, config: u8) -> Result<(), Error<I2C::Error>> {
         self.i2c
             .write(self.address, &[Register::CONFIGURATION, config])
+            .await
             .map_err(Error::I2C)?;
         self.config = config;
         Ok(())
     }
 
-    fn assert_is_in_manual_mode(&self) -> Result<(), Error<E>> {
+    fn assert_is_in_manual_mode(&self) -> Result<(), Error<I2C::Error>> {
         if (self.config & BitFlags::MANUAL) == 0 {
             return Err(Error::OperationNotAvailable);
         }

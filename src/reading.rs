@@ -1,33 +1,36 @@
 use crate::{BitFlags, CurrentDivisionRatio, Error, IntegrationTime, Max44009, Register};
-use embedded_hal::blocking::i2c;
+use embedded_hal_async::i2c::{I2c, SevenBitAddress};
 
-impl<I2C, E> Max44009<I2C>
+impl<I2C> Max44009<I2C>
 where
-    I2C: i2c::WriteRead<Error = E>,
+    I2C: I2c<SevenBitAddress>,
 {
     /// Reads whether an interrupt has happened.
-    pub fn has_interrupt_happened(&mut self) -> Result<bool, Error<E>> {
+    pub async fn has_interrupt_happened(&mut self) -> Result<bool, Error<I2C::Error>> {
         let mut data = [0];
         self.i2c
             .write_read(self.address, &[Register::INT_STATUS], &mut data)
+            .await
             .map_err(Error::I2C)
             .and(Ok(data[0] != 0))
     }
 
     /// Read the lux intensity.
-    pub fn read_lux(&mut self) -> Result<f32, Error<E>> {
+    pub async fn read_lux(&mut self) -> Result<f32, Error<I2C::Error>> {
         let mut data = [0; 2];
         self.i2c
             .write_read(self.address, &[Register::LUX_HIGH], &mut data)
+            .await
             .map_err(Error::I2C)
             .and(Ok(convert_to_lux(data[0], data[1])))
     }
 
     /// Read the integration time.
-    pub fn read_integration_time(&mut self) -> Result<IntegrationTime, Error<E>> {
+    pub async fn read_integration_time(&mut self) -> Result<IntegrationTime, Error<I2C::Error>> {
         let mut config = [0];
         self.i2c
             .write_read(self.address, &[Register::CONFIGURATION], &mut config)
+            .await
             .map_err(Error::I2C)?;
         match config[0] & 0b0000_0111 {
             0 => Ok(IntegrationTime::_800ms),
@@ -43,10 +46,13 @@ where
     }
 
     /// Read the current division ratio.
-    pub fn read_current_division_ratio(&mut self) -> Result<CurrentDivisionRatio, Error<E>> {
+    pub async fn read_current_division_ratio(
+        &mut self,
+    ) -> Result<CurrentDivisionRatio, Error<I2C::Error>> {
         let mut config = [0];
         self.i2c
             .write_read(self.address, &[Register::CONFIGURATION], &mut config)
+            .await
             .map_err(Error::I2C)?;
         if (config[0] & BitFlags::CDR) == 0 {
             Ok(CurrentDivisionRatio::One)
