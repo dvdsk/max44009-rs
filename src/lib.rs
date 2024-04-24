@@ -152,7 +152,7 @@ impl BitFlags {
 }
 
 /// MAX44009 ambient light sensor driver.
-#[derive(Debug)]
+#[derive(defmt::Format)]
 pub struct Max44009<I2C> {
     /// The concrete I²C device implementation.
     i2c: I2C,
@@ -172,6 +172,7 @@ pub use crate::types::{
 impl<I2C> Max44009<I2C>
 where
     I2C: I2c<SevenBitAddress>,
+    I2C::Error: defmt::Format,
 {
     /// Create new instance of the Max44009 device.
     pub fn new(i2c: I2C, address: SlaveAddr) -> Self {
