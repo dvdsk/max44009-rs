@@ -4,6 +4,7 @@ use embedded_hal_async::i2c::{I2c, SevenBitAddress};
 impl<I2C> Max44009<I2C>
 where
     I2C: I2c<SevenBitAddress>,
+    I2C::Error: defmt::Format,
 {
     /// Reads whether an interrupt has happened.
     pub async fn has_interrupt_happened(&mut self) -> Result<bool, Error<I2C::Error>> {

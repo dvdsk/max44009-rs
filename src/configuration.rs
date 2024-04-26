@@ -8,6 +8,7 @@ use embedded_hal_async::i2c::{I2c, SevenBitAddress};
 impl<I2C> Max44009<I2C>
 where
     I2C: I2c<SevenBitAddress>,
+    I2C::Error: defmt::Format,
 {
     /// Enable interrupt.
     ///

@@ -2,7 +2,7 @@
 
 /// All possible errors in this crate
 #[derive(defmt::Format)]
-pub enum Error<E> {
+pub enum Error<E: defmt::Format> {
     /// I²C bus error.
     I2C(E),
     /// A manual-configuration-mode-only was attempted while in automatic

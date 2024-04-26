@@ -6,7 +6,7 @@ use max44009::{
 mod common;
 use crate::common::{destroy, new, Register, DEV_BASE_ADDR};
 
-fn assert_operation_not_available_error<T, E>(result: Result<T, Error<E>>) {
+fn assert_operation_not_available_error<T, E: defmt::Format>(result: Result<T, Error<E>>) {
     match result {
         Err(Error::OperationNotAvailable) => (),
         _ => panic!("Did not return Error::OperationNotAvailable."),
