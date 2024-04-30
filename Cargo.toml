@@ -20,13 +20,19 @@ include = [
 ]
 edition = "2021"
 
+[features]
+thiserror = ["dep:thiserror"]
+serde = ["dep:serde"]
+# derive's MaxSize on Error enum
+postcard = ["dep:postcard"]
+
 [dependencies]
 embedded-hal-async = { version = "1.0.0", features = ["defmt-03"] }
 defmt = "0.3"
+thiserror = { version = "1.0.38", optional = true }
+serde = { version = "1.0", features = ["derive"], default-features = false, optional = true }
+postcard = { version = "1.0.8", features = ["experimental-derive"], optional = true }
 
 [dev-dependencies]
 linux-embedded-hal = "0.3"
 embedded-hal-mock = "0.8"
-
-[profile.release]
-lto = true

@@ -1,13 +1,42 @@
 //! Public types
 
 /// All possible errors in this crate
+#[derive(Debug)]
+#[cfg_attr(feature = "thiserror", derive(thiserror::Error))]
+#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 #[derive(defmt::Format)]
 pub enum Error<E: defmt::Format> {
-    /// I²C bus error.
+    /// I²C bus error
+    #[cfg_attr(feature = "thiserror", error("I²C bus error: {0}"))]
     I2C(E),
-    /// A manual-configuration-mode-only was attempted while in automatic
-    /// configuration mode.
+    #[cfg_attr(
+        feature = "thiserror",
+        error(
+            "A manual-configuration-mode-only was attempted while in automatic configuration mode."
+        )
+    )]
+    /// A manual-configuration-mode-only was attempted while in automatic configuration mode.
     OperationNotAvailable,
+}
+
+impl<E> Clone for Error<E>
+where
+    E: defmt::Format + core::fmt::Debug + Clone,
+{
+    fn clone(&self) -> Self {
+        match self {
+            Self::I2C(e) => Self::I2C(e.clone()),
+            Self::OperationNotAvailable => Self::OperationNotAvailable,
+        }
+    }
+}
+
+#[cfg(feature = "postcard")]
+impl<E> postcard::experimental::max_size::MaxSize for Error<E>
+where
+    E: postcard::experimental::max_size::MaxSize + core::fmt::Debug + defmt::Format,
+{
+    const POSTCARD_MAX_SIZE: usize = 1 + E::POSTCARD_MAX_SIZE;
 }
 
 /// Measurement mode
