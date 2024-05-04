@@ -39,6 +39,21 @@ where
     const POSTCARD_MAX_SIZE: usize = 1 + E::POSTCARD_MAX_SIZE;
 }
 
+impl<E> Eq for Error<E> where E: Eq + defmt::Format + core::fmt::Debug {}
+
+impl<E> PartialEq for Error<E>
+where
+    E: PartialEq + defmt::Format + core::fmt::Debug,
+{
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Error::I2C(e1), Error::I2C(e2)) => e1 == e2,
+            (Error::OperationNotAvailable, Error::OperationNotAvailable) => true,
+            (_, _) => false,
+        }
+    }
+}
+
 /// Measurement mode
 #[derive(defmt::Format, Clone, Copy, PartialEq)]
 pub enum MeasurementMode {
