@@ -128,7 +128,7 @@
 #![doc(html_root_url = "https://docs.rs/max44009/0.2.0")]
 #![deny(unsafe_code)]
 #![deny(missing_docs)]
-#![no_std]
+#![cfg_attr(not(feature = "thiserror"), no_std)]
 
 use embedded_hal_async::i2c::{I2c, SevenBitAddress};
 
